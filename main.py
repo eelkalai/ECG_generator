@@ -63,6 +63,7 @@ def main():
         ecgen.SaveTrainVal(i,'train')
     for i in range(10):
         ecgen.SaveTrainVal(i, 'val')
+
 if __name__ == "__main__":
     main()
 
