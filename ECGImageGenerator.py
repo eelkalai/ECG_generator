@@ -99,3 +99,15 @@ def plot(
             )
 def show():
     plt.show()
+
+
+def save_as_png(file_name,  dpi = 100, layout='tight'):
+    """Plot multi lead ECG chart.
+    # Arguments
+        file_name: file_name
+        path     : path to save image, defaults to current folder
+        dpi      : set dots per inch (dpi) for the saved image
+        layout   : Set equal to "tight" to include ax labels on saved image
+    """
+    plt.savefig('./' + file_name + '.png', dpi = dpi, bbox_inches=None)
+    plt.close()

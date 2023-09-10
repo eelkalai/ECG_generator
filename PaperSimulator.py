@@ -56,13 +56,30 @@ def light_spot(image):
     return output_image
 
 def add_padding(image):
-    # Define the amount of padding for each side (top, bottom, left, right)
-    top_pad = 50
-    bottom_pad = 50
-    left_pad = 30
-    right_pad = 30
-    # Create a border around the image with the specified padding
+    top_pad = 20
+    bottom_pad = 20
+    left_pad = 20
+    right_pad = 20
+    color =[256, 256 ,256]
+    # padded_image = cv2.copyMakeBorder(image, 1, 1, 1, 1, cv2.BORDER_CONSTANT,
+    #                                   value=0)
     padded_image = cv2.copyMakeBorder(image, top_pad, bottom_pad, left_pad, right_pad, cv2.BORDER_CONSTANT,
-                                      value=[0, 0, 0])
+                                      value=color)
     return padded_image
 
+
+def get_affine_matrix(scale=(1, 1), rotation=0, translation=(0, 0), shear=(0, 0)):
+    # Convert rotation angle to radians
+    rotation = np.radians(rotation)
+
+    # Decompose the transformation into individual matrices
+    scale_matrix = np.array([[scale[0], 0], [0, scale[1]]], dtype=np.float32)
+    rotation_matrix = np.array([[np.cos(rotation), -np.sin(rotation)], [np.sin(rotation), np.cos(rotation)]],
+                               dtype=np.float32)
+    translation_matrix = np.array([[1, 0, translation[0]], [0, 1, translation[1]]], dtype=np.float32)
+    shear_matrix = np.array([[1, shear[0]], [shear[1], 1]], dtype=np.float32)
+
+    # Combine the individual transformations
+    affine_matrix = translation_matrix @ shear_matrix @ rotation_matrix @ scale_matrix
+
+    return affine_matrix
