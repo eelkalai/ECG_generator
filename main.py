@@ -1,69 +1,44 @@
-import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw
-import random
+import cv2
+import numpy as np
 
-from ecg_plot import ecg_plot
+import FormatUtils
 
-import ECG_generator as ecgen
+# Read the image
+if __name__ == '__main__':
+    image = cv2.imread('ECG10.jpg')
+    height, width, _ = image.shape
+    # Define the coordinates of the line
+    # For example, let's say the line is a horizontal line at y=100
 
+    points = FormatUtils.loadECGPoints('ECG10.txt')[1:]
+    x1, y1 = int(points[0] * width), int(points[1] * height)
+    x2, y2 = int(points[2] * width), int(points[3] * height)
+    x3, y3 = int(points[4] * width), int(points[5] * height)
+    x4, y4 = int(points[6] * width), int(points[7] * height)
+    # Create a mask for the diagonal line
+    mask = np.zeros_like(image[:, :, 0])
 
-def createLabel(x1, x2, y1, y2, pagesize):
-    center_x = (x1 + x2) / 2 / pagesize
-    center_y = (y1 + y2) / 2 / pagesize
-    width_rec = (x2 - x1) / pagesize
-    height_rec = (y2 - y1) / pagesize
-    label = f"0 {center_x:.6f} {center_y:.6f} {width_rec:.6f} {height_rec:.6f}"
-    return label
+    # Define the size of the blur kernel
+    kernel_size = (15, 15)
 
+    cv2.line(mask, (x1, y1), (x2, y2), color=255, thickness=5)
+    cv2.line(mask, (x2, y2), (x3, y3), color=255, thickness=5)
+    cv2.line(mask, (x3, y3), (x4, y4), color=255, thickness=5)
+    cv2.line(mask, (x4, y4), (x1, y1), color=255, thickness=5)
 
-# Set the size of the square images
-width, height = 1600, 720
+    blurred_region = cv2.GaussianBlur(image, kernel_size, sigmaX=0, sigmaY=0)[y1:y2, x1:x2]
+    image[y1:y2, x1:x2] = blurred_region
 
-# Set the number of images to generate
-num_images = 100
+    blurred_region = cv2.GaussianBlur(image, kernel_size, sigmaX=0, sigmaY=0)[y2:y3, x2:x3]
+    image[y2:y3, x2:x3] = blurred_region
 
+    blurred_region = cv2.GaussianBlur(image, kernel_size, sigmaX=0, sigmaY=0)[y3:y4, x3:x4]
+    image[y3:y4, x3:x4] = blurred_region
 
-def Rectangle():
-    for i in range(num_images):
-        # Create a new image with a white background
-        img = Image.new('RGB', (width, height), color='white')
-        existing_rectangles = []
-        labels = ""
-        ecg =[]
-        ecg_plot.plot(ecg, sample_rate=500, title='ECG 12')
+    blurred_region = cv2.GaussianBlur(image, kernel_size, sigmaX=0, sigmaY=0)[y4:y1, x4:x1]
+    image[y4:y1, x4:x1] = blurred_region
 
-        # Generate a random size and position for the square
-        for j in range(10):
-            print(j)
-            x_size = random.randint(50, 200)
-            y_size = random.randint(50, 200)
-            x = random.randint(0, width - x_size)
-            y = random.randint(0, height - y_size)
-            overlap = False
-            for rectangle in existing_rectangles:
-                if rectangle[0] < x + x_size and rectangle[1] > x and rectangle[2] < y + y_size and rectangle[3] > y:
-                    overlap = True
-            if overlap:
-                continue
-            labels += createLabel(x, x + x_size, y, y + y_size, width) + "\n"
-            existing_rectangles.append([x, x + x_size, y, y + y_size])
-            draw = ImageDraw.Draw(img)
-            draw.rectangle((x, y, x + x_size, y + y_size), fill=None, outline='black')
-
-        # Save the image
-        filename = f'train/square_{i + 1}.png'
-        img.save(filename)
-        filename = f'val/square_{i + 1}.txt'
-        with open(filename, 'w') as f:
-            f.write(labels)
-
-
-def main():
-    for i in range(100):
-        ecgen.SaveTrainVal(i,'train')
-    for i in range(10):
-        ecgen.SaveTrainVal(i, 'val')
-
-if __name__ == "__main__":
-    main()
-
+    # Display the result
+    cv2.imshow('Blurred Image', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
